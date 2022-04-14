@@ -1,111 +1,215 @@
-//1. If there are errors when the “Validate” button is clicked, then error messages (for all errors)
-//with a class of “errors” appears in the div preceding the form.
-//--Create error message function with these parameters targeting div
+window.onload = () => {
+    addEventListeners();
+};
 
-const errorMessagePlacement = (e) => {
-    let placement = document.getElementsByClassName('.errors');
-    for (placement of placements){
-        document.target.appendChild
+/**
+ * Adds the click event listeners to the submit buttons
+ */
+const addEventListeners = () => {
+    const submitButtons = document.getElementsByName('submitBtn');
+
+    for (const button of submitButtons) {
+        button.addEventListener('click', validateForm);
     }
 }
 
-//2. Errors are displayed as an unordered list in red text.
-//--Create unorderedList function for errors
-//--Style all errors and error messages in CSS
+/**
+ * Clears previous, then writes new error messages to the appropriate place
+ * @param {string []} errorMessages 
+ * @param {HTMLElement} errorContainer error div
+ */
+const displayErrors = (errorMessages, errorContainer) => {
+    let errorList = document.createElement("ul");
 
-const addUnorderedListOfErrors = () => {
-    let 
-}
+    while (errorContainer.firstChild) {
+        errorContainer.removeChild(errorContainer.firstChild);
+    }
 
+    for (const message of errorMessages) {
+        let li = document.createElement("li");
+        li.innerText = message;
+        errorList.appendChild(li);
+    }
 
+    errorContainer.appendChild(errorList);
+};
 
-//3. Given  there are errors on the form when “Validate” is clicked, nothing happens.
-//--Create nothingHappens function with for loop and if statement 
+/**
+ * Handles validate click
+ * @param {MouseEvent} event click
+ */
+const validateForm = (event) => {
+    //Get the Parent form for the submit button that was clicked.
+    const form = event.target.form;
+    const errorMessages = [];
 
+    //Get the container for the errors.
+    const errorContainer = form.parentElement.getElementsByClassName("errors")[0];
 
+    //For each input
+    for (const input of form) {
+        if (input.type !== 'text') {
+            continue;
+        }
+        //For each class
+        for (const className of input.classList) {
+            let classErrorMessages = [];
+            switch (className) {
+                case 'required':
+                    if (!isValidRequired(input.value)) {
+                        classErrorMessages.push('Required fields must have a value that is not empty or whitespace.');
+                    }
+                    break;
+                case 'numeric':
+                    if (!isValidNumeric(input.value)) {
+                        classErrorMessages.push('Numeric fields must be a series of numbers.');
+                    }
+                    break;
+                case 'required_size':
+                    if (!isValidRequiredSize(input)) {
+                        classErrorMessages.push('Required_size field lengths must exactly match the minlength attribute of that field.');
+                    }
+                    break;
+                case 'username':
+                    if (!isValidUsernameLength(input.value)) {
+                        classErrorMessages.push('Username fields must contain at least 8 characters.');
+                    }
+                    if (!isValidUsernameAlphanumeric(input.value)) {
+                        classErrorMessages.push('Username fields must contain only alphanumeric characters.');
+                    }
+                    break;
+                case 'password':
+                    if (!isValidPassword(input.value)) {
+                        classErrorMessages.push('Password fields must contain one or more of each of the following types: uppercase letters, lowercase letters, numbers, special characters.');
+                    }
+                    break;
+                case 'date':
+                    if (!isValidDate(input.value)) {
+                        classErrorMessages.push('Date fields must match the format of XX/XX/XXXX.');
+                    }
+                    break;
+                case 'phone':
+                    if (!isValidPhone(input.value)) {
+                        classErrorMessages.push('Phone fields must match the format of XXX-XXX-XXXX.');
 
-//4. If there are no errors when “Validate” is clicked, the form is submitted.
-//--Create successfulSubmit function with for loop and if statement
+                    }
+                    break;
+                case 'alphabetic':
+                    if (!isValidAlphabetic(input.value)) {
+                        classErrorMessages.push('Alphabetic fields must be a series of alphabetic characters.');
+                    }
+                    break;
+                default:
+                    break;
+            }
 
+            //In most cases, there is only one message per class, but username could have two error messages.
+            for (const errorMessage of classErrorMessages) {
+                if (!errorMessages.includes(errorMessage)) {
+                    errorMessages.push(errorMessage);
+                }
+            }
+        }
+    }
 
+    //Add any errors to the error container.
+    displayErrors(errorMessages, errorContainer);
 
-//5. Given multiple forms on a page, when the “Validate” button is clicked for any form, only that
-//form runs through validation.
-//--Create validateButton function that targets current form only
+    //Prevent form submission if there were errors
+    if (errorMessages.length) {
+        event.preventDefault();
+    }
+};
 
+/**
+ * returns true if text is not empty or only whitespace
+ * @param {string} text 
+ * @returns {boolean}
+ */
+const isValidRequired = (text) => {
+    return text.trim().length > 0;
+};
 
+/**
+ * returns true if the input value length is 0 matches the minlength attribute
+ * @param {HTMLElement} input 
+ * @returns {boolean}
+ */
+const isValidRequiredSize = (input) => {
+    return Number(input.getAttribute('minlength')) === input.value.length || input.value.length === 0;
+};
 
-//6. If a text field has a class of “required”, and nothing is entered or only white space is
-//entered, when the form runs through validation an error message appears in the correct location
-//that says: "Required fields must have a value that is not empty or whitespace”. 
-//--Create error message function with these parameters targeting div
+/**
+ * returns true if text is numeric
+ * @param {string} text 
+ * @returns {boolean}
+ */
+const isValidNumeric = (text) => {
+    const numericRegex = /^$|^\d+$/;
+    return numericRegex.test(text);
+};
 
+/**
+ * returns true if text is alphanumeric
+ * @param {string} text 
+ * @returns {boolean}
+ */
+const isValidUsernameAlphanumeric = (text) => {
+    const alphanumericRegex = /^$|^[a-z0-9]+$/i
+    return alphanumericRegex.test(text);
+};
 
+/**
+ * returns true if text is blank or >=8 characters long
+ * @param {string} text 
+ * @returns {boolean}
+ */
+const isValidUsernameLength = (text) => {
+    return text.length >= 8 || text.length === 0;
+};
 
-//7. If a text field does not have a class of “required”, and nothing is entered, when the form’s
-//validation runs, no error message appears.
+/**
+ * returns true if text meets date requirements
+ * @param {string} text 
+ * @returns {boolean}
+ */
+const isValidDate = (text) => {
+    const dateRegex = /^$|^\d{2}\/\d{2}\/\d{4}$/;
 
+    return dateRegex.test(text);
+};
 
+/**
+ * returns true if text meets phone requirements
+ * @param {string} text 
+ * @returns {boolean}
+ */
+const isValidPhone = (text) => {
+    const phoneRegex = /^$|^\d{3}-\d{3}-\d{4}$/;
+    return phoneRegex.test(text);
+};
 
-//8. If an input field has a class of “numeric” and non-numeric characters are entered, when
-//validation runs, an error message appears in the correct location that says: "Numeric fields must
-//be a series of numbers".
-//--Create numericOnly function that only allows numeric characters
-//--Include an if statement in which non-numeric characters return error message
+/**
+ * returns true if text meets password requirements
+ * @param {string} text 
+ * @returns {boolean}
+ */
+const isValidPassword = (text) => {
+    const hasLowerCase = /[a-z]/.test(text);
+    const hasCapital = /[A-Z]/.test(text);
+    const hasDigit = /[0-9]/.test(text);
+    const hasSpecial = /[~!@#$%^&*()_+=\-`]/.test(text);
 
+    return text.length === 0 || (hasLowerCase && hasCapital && hasDigit && hasSpecial);
+};
 
+/**
+ * returns true if text is alphabetic
+ * @param {string} text 
+ * @returns {boolean}
+ */
+const isValidAlphabetic = (text) => {
+    const alphabeticRegex = /^$|^[a-z]+$/i;
 
-//9. If a text field has a class of “required_size” with a minlength attribute and entered text is
-//less than minlength, then an error message is displayed in the correct location that says:
-//"Required_size field lengths must exactly match the minlength attribute of that field”.
-
-
-
-//10. If an input field has a class of “username” and non-alphanumeric characters are used, when the
-//form’s validation is run, an error message appears in the correct location that says: "Username
-//fields must contain only alphanumeric characters".
-//--Create userName function that only allows alphanumeric characters
-//--Include an if statement in which non-alphanumeric characters return an error message
-
-
-
-//11. Given an input field with a class of “username”, if text input is fewer than eight characters,
-//when validation is run, an error message appears in the correct location that says: "Username
-//fields must contain at least 8 characters”.
-//--Create usernameRequirement function that requires >= 8 parameters
-//--Include if statement in which < 8 characters returns error message
-
-
-
-//12. If an input field with a class of “date” is given an entry that does not match XX/XX/XXXX
-//format, then when validation is run an error message appears in the correct location that says:
-//"Date fields must match the format of XX/XX/XXXX”.
-//--Create dateFormat function 
-
-
-
-//13. If an input field with a class of “phone” is given an entry that does not match XXX-XXX-XXXX
-//format, then when validation is run an error message appears in the correct location that says:
-//"Phone fields must match the format of XXX-XXX-XXXX". 
-
-
-
-//14. Given an input of type "text" has a class of "password", and an entry that does not contain
-//one of: (uppercase letter, lowercase letter, number, special character) has been entered into this
-//input, when this form's validation runs, then an error appears in the correct location, and the
-//error text says: "Password fields must contain one or more of each of the following types:
-//uppercase letters, lowercase letters, numbers, special characters".
-
-
-
-//15. Given an input of type "text" has a class of "alphabetic", and given a non-alphabetic character
-//has been entered into this input, when this form's validation runs, then an error appears in the
-//correct location, and the error text says "Alphabetic fields must be a series of alphabetic
-//characters."
-
-
-
-//14. Given an input of type "text" has multiple classes, when this form's validation runs, then all
-//pertinent validation for this input is run:
-//For example, if an input has alphabetic and required_size, then both the alphabetic validation and
-//required_size validation would need to run.
+    return alphabeticRegex.test(text);
+};
